@@ -1,0 +1,162 @@
+template<typename Object>
+class List
+{
+private:
+    struct Node
+    {
+        Object data;
+        Node *prev;
+        Node *next;
+        Node(const Object &d=Object(),Node *p=0,Node *n=0):data(d),prev(p),next(n){}
+
+    };
+private:
+    int theSize;
+    Node *head;
+    Node *tail;
+    void init()
+    {
+        theSize=0;
+        head=new Node;
+        tail=new Node;
+        head->next=tail;
+        tail->prev=head;
+    }
+public:
+    class const_iterator
+    {
+    friend class List<Object>;
+    protected:
+        Node *current;
+        Object &retrieve()const{return current->data;}
+        const_iterator(Node *p):current(p){}
+    public:
+        const_iterator():current(0){}
+        const Object &operator*()const{return retrieve();}
+        const_iterator &operator++()
+        {
+            current=current->next;
+            return *this;
+        }
+        const_iterator &operator--()
+        {
+            current=current->prev;
+            return *this;
+        }
+        const_iterator operator++(int)
+        {
+            const_iterator old=*this;
+            ++(*this);
+            return old;
+        }
+        bool operator==(const const_iterator&rhs)const{return current==rhs.current;}
+        bool operator!=(const const_iterator&rhs)const{return !(*this==rhs);}
+    };
+    class iterator:public const_iterator
+    {
+    friend class List<Object>;
+    protected:
+        iterator(Node *p):const_iterator(p){}
+    public:
+        iterator(){}
+        Object&operator*(){return retrieve();}
+        const Object&operator*()const{return const_iterator::operator*();}
+        iterator &operator++()
+        {
+            current=current->next;
+            return *this;
+        }
+        iterator &operator--()
+        {
+            current=current->prev;
+            return *this;
+        }
+        iterator operator++(int)
+        {
+            iterator old=*this;
+            ++(*this);
+            return old
+        }
+    };
+    List(){init();}
+    ~List()
+    {
+        clear();
+        delete head;
+        delete tail;
+    }
+    List(const List&rhs)
+    {
+        init();
+        *this=rhs;
+    }
+    const List&operator=(const List&rhs)
+    {
+        if(this==&rhs)return *this;
+        clear();
+        for(const_iterator itr=rhs.begin();itr!=rhs.end();++itr)
+            push_back(*itr);
+        return *this;
+    }
+    iterator begin(){return iterator(head->next);}
+    const_iterator begin()const{return const_iterator(head->next);}
+    iterator end(){return iterator(tail);}
+    const_iterator end()const{return iterator(tail);}
+    int size()const{return theSize;}
+    bool empty()const{return size()==0;}
+    void clear()
+    {
+        while(!empty())
+            pop_front();
+    }
+    Object &front(){return *begin();}
+    const Object &front()const{return *beign();}
+    Object &back(){return *--end();}
+    const Object &back()const{return *--end();}
+    void push_front(const Object &x){insert(begin(),x);}
+    void push_back(const Object &x){insert(end(),x);}
+    void pop_front(){erase(begin());}
+    void pop_back(){erase(--end());}
+    iterator insert(iterator itr,const Object &x)
+    {
+        Node *p=itr.current;
+        theSize++;
+        return iterator(p->prev=p->prev->next=new Node(x,p->prev,p));
+    }
+    iterator erase(iterator itr)
+    {
+        Node*p=itr.current;
+        iterator retVal(p->next);
+        p->prev->next=p->next;
+        p->next->prev=p->prev;
+        delete p;
+        theSize--;
+        return retVal;
+    }
+    iterator erase(iterator start,iterator end)
+    {
+        for(iterator itr=from;itr!=to;)
+            itr=erase(itr);
+        return to;
+    }
+};
+#include<iostream>
+using namespace std;
+int main()
+{
+    List<int> l;
+    for(int i=0;i<5;i++)//压入5个元素，应当输出0 1 2 3 4
+     {l.push_front(i);
+      cout<<l.front()<<ends;}
+    cout<<endl;
+    l.pop_front();//链头压出一个元素
+    l.pop_back();//链尾压出一个元素
+    cout<<l.back()<<endl;//应输出1
+    l.push_back(10);
+    cout<<l.back()<<endl;//应输出10
+    List<int>::iterator it=l.begin();//现在元素为 3 2 1 10，故输出第一个元素3
+    cout<<*it<<endl;
+    List<int> l2;
+    l2=l;
+    return 0;
+}
