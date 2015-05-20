@@ -1,0 +1,111 @@
+#include <iostream>
+#include <list>
+#include <vector>
+using namespace std;
+const int INFINTY=100000000;
+class Graph
+{
+private:
+    struct edge
+    {
+        int next_num;
+        int len;
+        edge(int next_num,int len):next_num(next_num),len(len){};
+    };
+    struct Vertex
+    {
+        list<edge> adj;
+        bool known;
+        int dist;
+        int num;
+        Vertex *path;
+        Vertex(int num):known(0),dist(INFINTY),path(NULL),num(num){};
+    };
+    vector<Vertex> vadj;          //注意下标从0开始
+    int N;
+public:
+    void start(int n,int m,int a[]);//n个结点 m条路 a存路径和路径长
+    void clear();
+    void printpath(Vertex *v);
+    void printpath(int end_num);
+    void dijkstra(int search_num);
+    ~Graph(){clear();}
+};
+void Graph::start(int n,int m,int a[])
+{
+    vadj.reserve(n);
+    N=n;
+    for(int i=0;i<n;i++)
+    {
+        Vertex temp(i);
+        vadj.push_back(temp);
+    }
+    for(int i=0;i<m;i++)
+    {
+        edge temp(a[3*i+1],a[3*i+2]);
+        vadj[a[3*i]].adj.push_back(temp);
+    }
+}
+void Graph::clear()
+{
+    vadj.clear();
+}
+void Graph::printpath(int end_num)
+{
+    printpath(&vadj[end_num-1]);
+}
+void Graph::printpath(Vertex *v)
+{
+    if(v->path!=NULL)
+    {
+     printpath(v->path);
+     cout<<"to";
+    }
+    cout<<v->num+1<<endl;
+}
+void Graph::dijkstra(int search_num)
+{
+    for(int i=0;i<N;i++)
+    {
+        vadj[i].dist=INFINTY;
+        vadj[i].known=0;
+    }
+    vadj[search_num-1].dist=0;
+    for(int j=0;j<N;j++)
+    {
+    int min=INFINTY;
+    int num;
+    for(int i=0;i<N;i++)
+    {
+        if(vadj[i].known==0&&vadj[i].dist<min)
+        {
+            num=i;
+            min=vadj[i].dist;
+        }
+    }
+    vadj[num].known=1;
+    list<edge>::iterator it;
+    for(it=vadj[num].adj.begin();it!=vadj[num].adj.end();it++)
+    {
+        if(vadj[(*it).next_num].known==0&&vadj[(*it).next_num].dist>vadj[num].dist+(*it).len)
+        {
+            vadj[(*it).next_num].dist=vadj[num].dist+(*it).len;
+            vadj[(*it).next_num].path=&vadj[num];
+        }
+    }
+    }
+}
+
+int main()
+{
+    freopen("input.txt","r",stdin);//实际的输入输出查询下标都不需要-1
+    int n,m;int a[1000];
+    cin>>n>>m;
+    for(int i=0;i<m;i++)
+    {cin>>a[3*i]>>a[3*i+1]>>a[3*i+2];a[3*i]--;a[3*i+1]--;}
+    Graph G;
+    G.start(n,m,a);
+    G.dijkstra(1);
+    G.printpath(6);
+    return 0;
+}
