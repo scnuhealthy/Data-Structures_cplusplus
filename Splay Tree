@@ -1,0 +1,242 @@
+#include<iostream>
+using namespace std;
+template<typename Comparable>
+class BinarySearchTree
+{
+public:
+    BinarySearchTree(){root=NULL;}
+    BinarySearchTree(const BinarySearchTree&rhs){root=clone(rhs.root);}//不能调用重载=
+    ~BinarySearchTree();
+    const Comparable &findMin()const{return findMin(root)->element;}
+    const Comparable &findMax()const{return findMax(root)->element;}
+    bool contains(const Comparable &x);
+    bool isempty()const{return root==NULL;}
+    void printTree()const{printTree(root,0);}
+    void makeEmpty(){makeEmpty(root);}
+    void insert(const Comparable &x);
+    void remove(const Comparable &x);
+    const BinarySearchTree &operator=(const BinarySearchTree &rhs);
+private:
+    struct BinaryNode
+    {
+    Comparable element;
+    BinaryNode *left;
+    BinaryNode *right;
+    BinaryNode(const Comparable &theElement,BinaryNode*lt,BinaryNode*rt):element(theElement),left(lt),right(rt){}
+    };
+    BinaryNode *root;
+    void insert(const Comparable &x,BinaryNode *&t);
+    void remove(const Comparable &x,BinaryNode *&t);
+    bool contains(const Comparable &x,BinaryNode *&t);
+    void makeEmpty(BinaryNode *&t);
+    void printTree(BinaryNode *t,int depth)const;
+    void rotateWithLeftChild(BinaryNode *&k2);
+    void rotateWithRightChild(BinaryNode *&k1);
+    void doubleWithLeftChild(BinaryNode *&k3);
+    void doubleWithRightChild(BinaryNode *&k3);
+    BinaryNode *findMin(BinaryNode *t)const
+    {
+      if(t==NULL)
+        return NULL;
+      if(t->left==NULL)
+        return t;
+      return findMin(t->left);
+    }
+    BinaryNode *findMax(BinaryNode *t)const
+    {
+     if(t!=NULL)
+        while(t->right!=NULL)
+        t=t->right;
+     return t;
+    }
+    BinaryNode *clone(BinaryNode *t)const
+    {
+     if(t==NULL)
+        return NULL;
+     return new BinaryNode(t->element,clone(t->left),clone(t->right));
+    }
+};
+template<typename Comparable>
+bool BinarySearchTree<Comparable>::contains(const Comparable &x)
+{
+    return contains(x,root);
+}
+template<typename Comparable>
+void BinarySearchTree<Comparable>::insert(const Comparable &x)
+{
+    insert(x,root);
+}
+template<typename Comparable>
+void BinarySearchTree<Comparable>::remove(const Comparable &x)
+{
+    remove(x,root);
+}
+template<typename Comparable>
+bool BinarySearchTree<Comparable>::contains(const Comparable &x,BinaryNode *&t)
+{
+    if(t==NULL)
+        return false;
+    else if(x<t->element)
+    {
+        bool p=contains(x,t->left);
+        if(p&&t==root&&t->left->element==x)rotateWithLeftChild(t);
+
+
+        else if(p&&t->left!=NULL&&t->left->left!=NULL&&x==t->left->left->element)  //else一定要有，因为t指向的地址会改变，然后就gg了
+        {
+            rotateWithLeftChild(t);
+            rotateWithLeftChild(t);//这次旋转的实际上是上一步的左结点
+        }
+        else if(p&&t->left->right!=NULL&&x==t->left->right->element)
+        {
+               doubleWithLeftChild(t);
+        }
+        return p;
+    }
+    else if(t->element<x)   //与上面类似
+    {
+        bool p=contains(x,t->right);
+        if(p&&t==root&&t->right->element==x)rotateWithRightChild(t);
+
+
+        else if(p&&t->right!=NULL&&t->right->right!=NULL&&x==t->right->right->element)  //else一定要有，因为t指向的地址会改变，然后就gg了
+        {
+            rotateWithRightChild(t);
+            rotateWithRightChild(t);//这次旋转的实际上是上一步的左结点
+        }
+        else if(p&&t->right->left!=NULL&&x==t->right->left->element)
+        {
+               doubleWithRightChild(t);
+        }
+        return p;
+    }
+    else
+        return true;
+}
+template<typename Comparable>
+void BinarySearchTree<Comparable>::insert(const Comparable &x,BinaryNode *&t)
+{
+    if(t==NULL)
+        t=new BinaryNode(x,NULL,NULL);
+    else if(x<t->element)
+        insert(x,t->left);
+    else if(t->element<x)
+        insert(x,t->right);
+    else;
+}
+template<typename Comparable>
+void BinarySearchTree<Comparable>::remove(const Comparable &x,BinaryNode *&t)
+{
+    if(t==NULL)
+        return ;
+    if(x<t->element)
+        remove(x,t->left);
+    else if(t->element<x)
+        remove(x,t->right);
+    else if(t->left!=NULL&&t->right!=NULL)
+    {
+        t->element=findMin(t->right)->element;
+        remove(t->element,t->right);
+    }
+    else
+    {
+        BinaryNode *oldNode=t;
+        t=(t->left!=NULL)?t->left:t->right;
+        delete oldNode;
+    }
+}
+template<typename Comparable>
+BinarySearchTree<Comparable>::~BinarySearchTree()
+{
+    makeEmpty();
+}
+template<typename Comparable>
+void BinarySearchTree<Comparable>::makeEmpty(BinaryNode *&t)
+{
+    if(t!=NULL)
+    {
+        makeEmpty(t->left);
+        makeEmpty(t->right);
+        delete t;
+    }
+    t=NULL;
+}
+template<typename Comparable>
+const BinarySearchTree<Comparable>&BinarySearchTree<Comparable>::operator=(const BinarySearchTree &rhs)
+{
+    if(this!=&rhs)           //复制构造函数不能调用重载=因为现在this不存在
+    {
+        makeEmpty();
+        root=clone(rhs.root);
+    }
+    return *this;
+}
+template<typename Comparable>
+void BinarySearchTree<Comparable>::printTree(BinaryNode *t,int depth)const
+{
+     for(int i=0;i<depth;i++)
+     {
+         cout<<" ";
+     }
+     cout<<t->element<<endl;
+     if(t->left!=NULL)printTree(t->left,depth+1);
+     if(t->right!=NULL)printTree(t->right,depth+1);
+}
+template<typename Comparable>
+void BinarySearchTree<Comparable>::rotateWithLeftChild(BinaryNode *&k2)
+{
+    BinaryNode *k1=k2->left;
+    k2->left=k1->right;
+    k1->right=k2;
+    k2=k1;
+}
+template<typename Comparable>
+void BinarySearchTree<Comparable>::rotateWithRightChild(BinaryNode *&k1)
+{
+    BinaryNode *k2=k1->right;
+    k1->right=k2->left;
+    k2->left=k1;
+    k1=k2;
+}
+template<typename Comparable>
+void BinarySearchTree<Comparable>::doubleWithLeftChild(BinaryNode *&k3)
+{
+    rotateWithRightChild(k3->left);
+    rotateWithLeftChild(k3);
+}
+template<typename Comparable>
+void BinarySearchTree<Comparable>::doubleWithRightChild(BinaryNode *&k3)
+{
+    rotateWithLeftChild(k3->right);
+    rotateWithRightChild(k3);
+}
+int main()
+{
+    BinarySearchTree<int>tree;
+    /*
+    tree.insert(8);
+    tree.insert(5);
+    tree.insert(9);
+    tree.insert(3);
+    tree.insert(6);
+    tree.insert(1);
+    tree.insert(4);
+    tree.insert(0);
+    tree.insert(2);
+    tree.printTree();
+    tree.contains(0);
+    tree.printTree();
+    */
+    tree.insert(10);
+    tree.insert(1);
+    tree.insert(20);
+    tree.insert(11);
+    tree.insert(25);
+    tree.insert(21);
+    tree.insert(27);
+    tree.printTree();
+    tree.contains(11);
+    tree.printTree();
+    return 0;
+}
+
