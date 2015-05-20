@@ -1,0 +1,106 @@
+#include <iostream>
+#include<vector>
+#include <ctime>
+#include <cstdlib>
+using namespace std;
+double random(double start, double end)
+{
+    return start+(end-start)*rand()/(RAND_MAX + 1.0);
+}
+class DisjSets
+{
+public:
+    explicit DisjSets(int numElements,int size):size(size)//第一个为点的数目，第二个为迷宫的行数，通常要求size*size=numElements
+    {
+        s.reserve(numElements);
+        for(int i=0;i<numElements;i++)
+            s.push_back(-1);
+    }
+    int find(int x)const;
+    int find(int x);
+    void unionSets(int root1,int root2);
+    void build();
+    void print(){for(int i=0;i<s.size();i++) cout<<s[i]<<ends;cout<<endl;}
+    void print_wall(){for(int i=0;i<w.size();i++) cout<<w[i].a<<ends<<w[i].b<<endl;}//打印出合并路径
+private:
+    vector<int> s;
+    int size;
+    struct wall
+    {
+        int a;
+        int b;
+        wall(int a,int b):a(a),b(b){}
+    };
+    vector<wall> w;
+};
+int DisjSets::find(int x)const
+{
+    if(s[x]<0)
+        return x;
+    else find(s[x]);
+
+}
+void DisjSets::unionSets(int root1,int root2)//按大小合并
+{
+    if(s[root2]<s[root1])
+    {
+        s[root2]+=s[root1];
+        s[root1]=root2;
+    }
+    else
+    {
+        s[root1]+=s[root2];
+        s[root2]=root1;
+    }
+}
+int DisjSets::find(int x)
+{
+    if(s[x]<0)
+        return x;
+    else
+        return s[x]=find(s[x]);
+}
+void DisjSets::build()
+{
+    int choose=int(random(0,size*size-1));//随机找一个点
+    if(s[choose]==-(size*size))return;//如果全部点都在同一个集合，则完成
+    int order[4];
+    int dir=int(random(1,4));//随机选取上下左右
+    switch(dir)
+    {
+    case 1:order[0]=1;order[1]=-1;order[2]=size;order[3]=-size;break;
+    case 2:order[0]=-1;order[1]=size;order[2]=-size;order[3]=1;break;
+    case 3:order[0]=size;order[1]=-size;order[2]=1;order[3]=-1;break;
+    case 4:order[0]=-size;order[1]=1;order[2]=-1;order[3]=size;break;
+    }
+    for(int i=0;i<=3;i++)
+    {
+        int choose2=choose+order[i];
+        //cout<<choose<<ends<<choose2<<endl;
+        if(order[i]==-size||order[i]==size)
+           {if(choose2>size*size-1||choose2<0)continue;}
+        else if(order[i]==1||order[i]==-1)
+           {if(choose2/size!=choose/size||choose2<0)continue;}
+        //cout<<choose<<ends<<choose2<<endl;
+        int r1=find(choose);
+        int r2=find(choose2);
+        if(s[r1]<0&&s[r2]<0&&r1!=r2)//能合并则合并
+        {
+            unionSets(r1,r2);
+            wall temp(choose,choose2);
+            w.push_back(temp);//存储合并路径
+           // cout<<r1<<r2<<endl;
+            break;
+        }
+    }
+    build();//继续合并
+}
+int main()
+{
+    srand( (unsigned)time(0) );
+    DisjSets D(16,4);
+    D.build();
+    D.print_wall();
+    D.print();
+    return 0;
+}
