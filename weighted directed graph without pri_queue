@@ -109,3 +109,4 @@ int main()
     G.printpath(6);
     return 0;
 }
+//input see the title
