@@ -1,0 +1,155 @@
+#ifndef BINARYHEAP_H_INCLUDED
+#define BINARYHEAP_H_INCLUDED
+#include <iostream>
+#include <vector>
+using namespace std;
+
+template<class Comparable>
+class BinaryHeap{
+public:
+	explicit BinaryHeap(int capacity = 100):array(capacity),currentSize(0) {}
+	explicit BinaryHeap(const vector<Comparable> & items) :array(items.size() + 10), currentSize(items.size()){
+		for (int i = 0; i < items.size(); i++) array[i + 1] = items[i];
+		buildHeap();
+	}
+
+	bool isEmpty() const{
+		return currentSize == 0;
+	}
+	const Comparable & findMin() const{
+		return array[1];
+	}
+
+
+	/**
+	*	Insert item x, allowing duplicates.
+	*/
+	void insert(const Comparable & x){
+		if (currentSize == array.size() - 1)
+			array.resize(array.size() * 2);
+
+			// Percolate up
+		array[++currentSize] = x;
+		percolateUp(currentSize);
+	}
+
+	/**
+	*   Remove the minimum item.
+	*   Throw UnderflowException if empty.
+	*/
+	void deleteMin(){
+		if (isEmpty())
+			return;
+			//throw UnderflowException();
+
+		array[1] = array[currentSize--];
+		percolateDown(1);
+	}
+
+	/**
+	*   Remove the minimum item and place it in minItem.
+	*   Throws UnderflowException if empty.
+	*/
+	void deleteMin(Comparable & minItem){
+		if (isEmpty())
+			return;
+			//throw UnderflowException();
+
+		minItem = array[1];
+		array[1] = array[currentSize--];
+		percolateDown(1);
+	}
+
+	void makeEmpty(){
+		while (!isEmpty()) deleteMin();
+	}
+
+	void decreaseKey(int p, const Comparable & x){
+		array[p] -= x;
+		percolateUp(p);
+	}
+
+	void increaseKey(int p, const Comparable & x){
+		array[p] += x;
+		percolateDown(p);
+	}
+
+	void remove(int p){
+		decreaseKey(p, 1000000000);
+		deleteMin();
+	}
+
+
+
+private:
+	int currentSize;
+	vector<Comparable> array;
+
+	/**
+	*	Establish heap order priperty from an arbitrary
+	*	arrangement of items. Runs in linear time.
+	*/
+	void buildHeap(){
+		for (int i = currentSize / 2; i > 0; i--) percolateDown(i);
+	}
+
+	/**
+	*	Internal method to percolate down in the heap.
+	*	hole is th index at which the percolate begins.
+	*/
+	void percolateDown(int hole){
+		int child;
+		Comparable tmp = array[hole];
+
+		for (; hole * 2 <= currentSize; hole = child){
+			child = hole * 2;
+			if (child != currentSize && array[child + 1] < array[child]) ++child;
+			if (array[child] < tmp) array[hole] = array[child];
+			else break;
+		}
+		array[hole] = tmp;
+	}
+
+	void percolateUp(int hole){
+		Comparable tmp = array[hole];
+		for (; hole > 1 && tmp < array[hole / 2]; hole /= 2)
+			array[hole] = array[hole / 2];
+
+		array[hole] = tmp;
+	}
+};
+
+
+#endif // BINARYHEAP_H_INCLUDED
+#cpp
+#include <iostream>
+#include <vector>
+#include "BinaryHeap.h"
+using namespace std;
+
+int main(){
+	BinaryHeap<int> heap1;
+	heap1.insert(0);
+	vector<int> array = { -121, 21, 3213, 554, 5, 236, -1424918, 2342, 643533, 241 };
+	BinaryHeap<int> heap(array);
+	for (int i = 1; i < 12; i++){
+		heap1.insert(i);
+	}
+	heap1.decreaseKey(2, 10);
+	heap1.increaseKey(3, 10);
+	heap1.remove(7);
+	int x;
+	while (!heap1.isEmpty()){
+		heap1.deleteMin(x);
+		cout << x << endl;
+	}
+	cout << endl << heap1.isEmpty() << endl;
+
+	while (!heap.isEmpty()){
+		heap.deleteMin(x);
+		cout << x << endl;
+	}
+
+
+	return 0;
+}
