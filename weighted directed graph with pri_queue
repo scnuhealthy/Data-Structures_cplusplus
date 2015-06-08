@@ -1,0 +1,125 @@
+#include <iostream>
+#include <list>
+#include <vector>
+#include <queue>
+using namespace std;
+const int INFINTY=100000000;
+class Graph
+{
+private:
+    struct edge
+    {
+        int next_num;
+        int len;
+        edge(int next_num,int len):next_num(next_num),len(len){};
+    };
+    struct Vertex
+    {
+        list<edge> adj;
+        bool known;
+        int dist;
+        int num;
+        Vertex *path;
+        Vertex(int num):known(0),dist(INFINTY),path(NULL),num(num){};
+        bool operator <(const Vertex &b)const{return dist>b.dist;}
+    };
+    vector<Vertex> vadj;          //注意下标从0开始
+    int N;
+    void printpath(Vertex *v);
+public:
+    void start(int n,int m,int a[]);//n个结点 m条路 a存路径和路径长
+    void clear();
+    void printpath(int end_num);
+    void dijkstra(int search_num);
+    ~Graph(){clear();}
+};
+void Graph::start(int n,int m,int a[])
+{
+    vadj.reserve(n);
+    N=n;
+    for(int i=0;i<n;i++)
+    {
+        Vertex temp(i);
+        vadj.push_back(temp);
+    }
+    for(int i=0;i<m;i++)
+    {
+        edge temp(a[3*i+1],a[3*i+2]);
+        vadj[a[3*i]].adj.push_back(temp);
+    }
+}
+void Graph::clear()
+{
+    vadj.clear();
+}
+void Graph::printpath(int end_num)
+{
+    printpath(&vadj[end_num-1]);
+}
+void Graph::printpath(Vertex *v)
+{
+    if(v->path!=NULL)
+    {
+     printpath(v->path);
+     cout<<"to";
+    }
+    cout<<v->num+1<<endl;
+}
+void Graph::dijkstra(int search_num)
+{
+    for(int i=0;i<N;i++)
+    {
+        vadj[i].dist=INFINTY;
+        vadj[i].known=0;
+    }
+    vadj[search_num-1].dist=0;
+    priority_queue<Vertex> qv;
+    qv.push(vadj[search_num-1]);//压入起点
+    while(!qv.empty())
+    {
+    Vertex v=qv.top();
+    qv.pop();
+    int num=v.num;
+    //if(vadj[num].known==1)continue;//当压入重复结点时，避免重复操作,理论上应该不会
+    vadj[num].known=1;
+    list<edge>::iterator it;
+    for(it=vadj[num].adj.begin();it!=vadj[num].adj.end();it++)//更新dist
+    {
+        if(vadj[(*it).next_num].known==0&&vadj[(*it).next_num].dist>vadj[num].dist+(*it).len)
+        {
+            vadj[(*it).next_num].dist=vadj[num].dist+(*it).len;
+            vadj[(*it).next_num].path=&vadj[num];
+            qv.push(vadj[(*it).next_num]);
+        }
+    }
+    }
+}
+
+int main()
+{
+    freopen("input.txt","r",stdin);//实际的输入输出查询下标都不需要-1
+    int n,m;int a[1000];
+    cin>>n>>m;
+    for(int i=0;i<m;i++)
+    {cin>>a[3*i]>>a[3*i+1]>>a[3*i+2];a[3*i]--;a[3*i+1]--;}
+    Graph G;
+    G.start(n,m,a);
+    G.dijkstra(3);
+    G.printpath(5);
+    return 0;
+}
+/*input
+7 12
+1 2 2
+1 4 1
+2 4 3
+2 5 10
+3 1 4
+3 6 5
+4 3 2
+4 6 8
+4 7 4
+4 5 2
+5 7 6
+7 6 1
+*/
